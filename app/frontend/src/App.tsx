@@ -221,6 +221,7 @@ function App() {
   const [mobileNav, setMobileNav] = useState(false);
   const summary = useSummary();
   const bins = useBins();
+  const evaluation = useEvaluation();
 
   return (
     <div className="app-shell">
@@ -249,7 +250,7 @@ function App() {
         <div className="content">
           {activeTab === "dashboard" && <Dashboard summary={summary.data} bins={bins.data?.bins ?? []} loading={summary.isLoading || bins.isLoading} />}
           {activeTab === "test" && <TestWorkspace bins={bins.data?.bins ?? []} />}
-          {activeTab === "evaluation" && <EvaluationView evaluation={useEvaluation().data} />}
+          {activeTab === "evaluation" && <EvaluationView evaluation={evaluation.data} />}
         </div>
       </main>
     </div>
