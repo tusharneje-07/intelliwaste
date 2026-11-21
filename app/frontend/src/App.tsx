@@ -315,39 +315,53 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
   const scale = mapWidth / 820;
   const mapHeight = Math.round(650 * scale);
   const positions: Record<string, [number, number]> = { BIN001: [125, 135], BIN002: [260, 185], BIN003: [175, 300], BIN004: [465, 125], BIN005: [625, 180], BIN006: [530, 285], BIN007: [170, 500], BIN008: [350, 445], BIN009: [500, 505], BIN010: [690, 345], BIN011: [730, 470], BIN012: [650, 575] };
-  const horizontalRoads = [92, 168, 248, 335, 421, 510, 592];
-  const verticalRoads = [102, 202, 304, 405, 510, 614, 720];
+  const horizontalRoads = [75, 153, 238, 330, 420, 516, 600];
+  const verticalRoads = [94, 190, 292, 395, 500, 610, 724];
+  const buildings = [
+    [82, 35, 30, 24], [135, 42, 50, 31], [220, 31, 36, 25], [275, 49, 63, 30], [355, 32, 26, 44],
+    [83, 101, 46, 29], [151, 105, 28, 37], [232, 92, 58, 33], [310, 103, 34, 25], [349, 96, 45, 25],
+    [83, 181, 35, 37], [139, 174, 44, 24], [216, 169, 31, 48], [256, 180, 53, 27], [325, 171, 34, 40],
+    [440, 43, 46, 27], [506, 34, 33, 40], [555, 51, 56, 25], [635, 35, 36, 33], [686, 50, 48, 29],
+    [439, 107, 29, 28], [480, 98, 64, 35], [575, 104, 33, 37], [623, 96, 57, 30], [700, 111, 32, 26],
+    [440, 180, 58, 29], [522, 171, 31, 47], [569, 187, 60, 24], [648, 172, 38, 40], [704, 185, 35, 27],
+    [92, 372, 54, 31], [164, 360, 31, 45], [221, 377, 65, 24], [312, 365, 39, 34], [350, 382, 27, 45],
+    [90, 449, 32, 25], [137, 438, 60, 34], [226, 447, 36, 27], [282, 431, 54, 45], [350, 463, 37, 28],
+    [442, 371, 30, 43], [485, 361, 62, 28], [579, 377, 33, 39], [630, 363, 58, 30], [707, 376, 32, 44],
+    [448, 448, 54, 25], [518, 438, 35, 45], [578, 455, 66, 27], [674, 444, 41, 36], [715, 490, 27, 28],
+    [86, 551, 42, 28], [151, 535, 63, 39], [240, 556, 32, 25], [295, 534, 55, 34], [365, 553, 38, 28],
+    [448, 548, 38, 33], [510, 532, 63, 31], [598, 548, 31, 42], [650, 531, 59, 29], [716, 560, 29, 38],
+  ];
   return <div className="map-wrap" ref={wrapper}><Stage width={mapWidth} height={mapHeight} scaleX={scale} scaleY={scale}>
     <Layer>
-      <Rect x={0} y={0} width={820} height={650} fill="#e9eeea" cornerRadius={20} />
-      <Rect x={0} y={0} width={70} height={650} fill="#d9e4e6" cornerRadius={20} />
-      <Rect x={755} y={0} width={65} height={650} fill="#dce7e8" cornerRadius={20} />
-      <Text x={10} y={250} text="RIVER\nEDGE" fontFamily="DM Mono" fontSize={10} lineHeight={1.35} fill="#789097" rotation={-90} />
-      <Text x={775} y={260} text="CANAL" fontFamily="DM Mono" fontSize={10} fill="#789097" rotation={90} />
-      <ZoneShape x={78} y={28} width={310} height={285} color="#dbe9dc" label="Residential district" />
-      <ZoneShape x={422} y={28} width={325} height={285} color="#f2e5d4" label="Commercial core" />
-      <ZoneShape x={78} y={355} width={310} height={260} color="#f1dddd" label="Market quarter" />
-      <ZoneShape x={422} y={355} width={325} height={260} color="#dfe7f1" label="Institutional belt" />
-      <Rect x={115} y={55} width={85} height={46} fill="#c8ddc8" cornerRadius={8} />
-      <Rect x={245} y={377} width={72} height={66} fill="#c8ddc8" cornerRadius={8} />
-      <Rect x={570} y={390} width={100} height={47} fill="#c8ddc8" cornerRadius={8} />
-      <Text x={127} y={75} text="NORTH PARK" fontFamily="DM Mono" fontSize={8} fill="#65806a" />
-      <Text x={254} y={405} text="CIVIC GREEN" fontFamily="DM Mono" fontSize={8} fill="#65806a" />
-      <Text x={582} y={410} text="CAMPUS LAWN" fontFamily="DM Mono" fontSize={8} fill="#65806a" />
-      {horizontalRoads.map((y) => <Group key={`h-${y}`}><Line points={[76, y, 748, y]} stroke="#ffffff" strokeWidth={14} /><Line points={[76, y, 748, y]} stroke="#cbd2cd" strokeWidth={1.3} /></Group>)}
-      {verticalRoads.map((x) => <Group key={`v-${x}`}><Line points={[x, 30, x, 615]} stroke="#ffffff" strokeWidth={13} /><Line points={[x, 30, x, 615]} stroke="#cbd2cd" strokeWidth={1.2} /></Group>)}
-      <Group><Line points={[82, 570, 250, 400, 405, 310, 735, 92]} stroke="#ffffff" strokeWidth={18} /><Line points={[82, 570, 250, 400, 405, 310, 735, 92]} stroke="#bfc9c1" strokeWidth={1.5} /></Group>
-      <Group><Line points={[105, 78, 270, 210, 433, 265, 705, 565]} stroke="#ffffff" strokeWidth={11} /><Line points={[105, 78, 270, 210, 433, 265, 705, 565]} stroke="#c5cec7" strokeWidth={1.2} /></Group>
-      <Text x={442} y={78} text="NORTH AVENUE" fontFamily="DM Mono" fontSize={8} fill="#849187" rotation={90} />
-      <Text x={326} y={278} text="MARKET STREET" fontFamily="DM Mono" fontSize={8} fill="#849187" rotation={-28} />
-      <Text x={465} y={580} text="CIVIC BOULEVARD" fontFamily="DM Mono" fontSize={8} fill="#849187" rotation={28} />
-      <Text x={90} y={330} text="Illustrative streets • no GPS data" fontFamily="DM Mono" fontSize={9} fill="#718078" />
+      <Rect x={0} y={0} width={820} height={650} fill="#eef0ef" cornerRadius={20} />
+      <Rect x={0} y={0} width={52} height={650} fill="#dce7e9" cornerRadius={20} />
+      <Rect x={770} y={0} width={50} height={650} fill="#dce7e9" cornerRadius={20} />
+      <Text x={8} y={252} text="RIVER EDGE" fontFamily="DM Mono" fontSize={9} fill="#7b9294" rotation={-90} />
+      <Text x={780} y={250} text="CANAL" fontFamily="DM Mono" fontSize={9} fill="#7b9294" rotation={90} />
+      {buildings.map(([x, y, buildingWidth, buildingHeight], index) => <Rect key={`building-${index}`} x={x} y={y} width={buildingWidth} height={buildingHeight} fill={index % 4 === 0 ? "#e0e2e1" : "#e5e7e6"} stroke="#d4d8d6" strokeWidth={1} cornerRadius={2} />)}
+      {horizontalRoads.map((y) => <Group key={`h-${y}`}><Line points={[52, y, 770, y]} stroke="#ffffff" strokeWidth={15} /><Line points={[52, y, 770, y]} stroke="#d5d9d7" strokeWidth={1} /></Group>)}
+      {verticalRoads.map((x) => <Group key={`v-${x}`}><Line points={[x, 0, x, 650]} stroke="#ffffff" strokeWidth={13} /><Line points={[x, 0, x, 650]} stroke="#d7dbd9" strokeWidth={1} /></Group>)}
+      <Group><Line points={[52, 570, 185, 453, 338, 337, 474, 260, 770, 75]} stroke="#ffffff" strokeWidth={22} /><Line points={[52, 570, 185, 453, 338, 337, 474, 260, 770, 75]} stroke="#cdd2cf" strokeWidth={1.4} /></Group>
+      <Group><Line points={[52, 95, 180, 164, 320, 220, 478, 275, 770, 585]} stroke="#ffffff" strokeWidth={12} /><Line points={[52, 95, 180, 164, 320, 220, 478, 275, 770, 585]} stroke="#d2d7d4" strokeWidth={1} /></Group>
+      {[{ x: 395, y: 244 }, { x: 190, y: 453 }, { x: 610, y: 330 }].map((roundabout) => <Group key={`${roundabout.x}-${roundabout.y}`}><Circle x={roundabout.x} y={roundabout.y} radius={21} fill="#eef0ef" stroke="#ffffff" strokeWidth={8} /><Circle x={roundabout.x} y={roundabout.y} radius={9} fill="#e1e4e1" stroke="#cbd0cd" strokeWidth={1} /></Group>)}
+      <Rect x={122} y={265} width={76} height={50} fill="#d5e1d6" stroke="#c4d2c5" strokeWidth={1} cornerRadius={6} />
+      <Rect x={571} y={444} width={112} height={67} fill="#d5e1d6" stroke="#c4d2c5" strokeWidth={1} cornerRadius={6} />
+      <Text x={136} y={286} text="NORTH PARK" fontFamily="DM Mono" fontSize={8} fill="#69806c" />
+      <Text x={588} y={472} text="CIVIC GREEN" fontFamily="DM Mono" fontSize={8} fill="#69806c" />
+      <Text x={98} y={60} text="SHIVAJI ROAD" fontFamily="DM Mono" fontSize={10} fill="#777f7b" rotation={8} />
+      <Text x={294} y={197} text="RAJARAM ROAD" fontFamily="DM Mono" fontSize={10} fill="#777f7b" />
+      <Text x={588} y={137} text="CENTRAL MARKET" fontFamily="DM Mono" fontSize={9} fill="#818984" rotation={-2} />
+      <Text x={458} y={555} text="CIVIC CAMPUS" fontFamily="DM Mono" fontSize={9} fill="#818984" />
+      <Text x={340} y={617} text="Illustrative street layer • no GPS data" fontFamily="DM Mono" fontSize={9} fill="#78837d" />
       {bins.map((bin) => {
         const [x, y] = positions[bin.bin_id] ?? [410, 320];
         const selected = bin.bin_id === selectedBin;
         return <Group key={bin.bin_id} x={x} y={y} onClick={() => onSelect(bin.bin_id)} onTap={() => onSelect(bin.bin_id)}>
-          <Circle radius={selected ? 19 : 15} fill="#ffffff" opacity={0.7} />
-          <Circle radius={selected ? 13 : 10} fill={fillColor(bin.latest_fill)} stroke={selected ? "#14271f" : "#ffffff"} strokeWidth={selected ? 3 : 2} shadowColor="#18352a" shadowBlur={selected ? 9 : 4} shadowOpacity={0.28} />
+          <Circle radius={selected ? 21 : 17} fill="#ffffff" opacity={0.84} />
+          <Circle radius={selected ? 14 : 11} fill={fillColor(bin.latest_fill)} stroke={selected ? "#8b6d1d" : "#ffffff"} strokeWidth={selected ? 3 : 2} shadowColor="#6d5b27" shadowBlur={selected ? 10 : 5} shadowOpacity={0.28} />
+          <Rect x={-5} y={-4} width={10} height={10} fill="#39443e" cornerRadius={2} />
+          <Rect x={-6} y={-7} width={12} height={2} fill="#39443e" cornerRadius={1} />
+          <Line points={[-2, -1, -2, 4, 2, 4, 2, -1]} stroke="#f6d46b" strokeWidth={1} />
           <Rect x={-25} y={17} width={50} height={14} fill="#ffffffdd" cornerRadius={4} />
           <Text text={bin.bin_id} fontFamily="DM Mono" fontSize={7} fill="#345044" align="center" width={50} x={-25} y={20} />
         </Group>;
