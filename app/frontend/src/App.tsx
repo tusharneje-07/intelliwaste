@@ -325,8 +325,8 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
   return <div className="map-wrap real-map-wrap">
     <MapContainer center={mapCenter} zoom={13} minZoom={13} maxZoom={16} zoomControl={false} className="real-map">
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
       />
       <MapZoomControls center={mapCenter} />
       {bins.map((bin) => {
@@ -358,7 +358,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
         </CircleMarker>;
       })}
     </MapContainer>
-    <div className="map-map-note">OpenStreetMap road layer · synthetic marker placement</div>
+    <div className="map-map-note">No-label road basemap · synthetic marker placement</div>
     <div className="map-legend">{[["0–30%", "#3e9b6d"], ["30–60%", "#d4a72c"], ["60–80%", "#de7a37"], ["80–100%", "#d9564a"]].map(([label, color]) => <span key={label}><i style={{ background: color }} />{label}</span>)}</div>
   </div>;
 }
