@@ -80,6 +80,7 @@ h1 { margin: 7px 0 8px; font-size: clamp(28px, 3vw, 43px); line-height: 1.04; le
 .real-map .leaflet-control-attribution a { color: #4d7b5c; }
 .real-map .leaflet-popup-content-wrapper { border-radius: 9px; }
 .real-map .leaflet-popup-content { color: #344c3c; font: 11px/1.5 "DM Mono", monospace; }
+.real-map .bin-map-marker, .real-map .bin-map-marker:focus, .real-map .leaflet-interactive:focus { outline: none !important; }
 .real-map .leaflet-tooltip { border: 1px solid #cbdaca; border-radius: 5px; color: #294636; font: 10px "DM Mono", monospace; box-shadow: 0 4px 12px #20392b20; }
 .real-map .zone-map-label { border: 0; background: #ffffffbf; color: #536d5c; font: 9px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 2px 8px #20392b14; }
 .real-map .zone-map-label::before { display: none; }

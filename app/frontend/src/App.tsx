@@ -385,6 +385,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
             fillColor: fillColor(bin.latest_fill),
             fillOpacity: 0.94,
             weight: selected ? 3 : 2,
+            className: "bin-map-marker",
           }}
           eventHandlers={{ click: () => onSelect(bin.bin_id) }}
         >
