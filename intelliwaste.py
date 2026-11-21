@@ -27,9 +27,13 @@ INTER_OP_THREADS = max(1, CPU_THREADS // 2)
 VALIDATION_ERROR_LIMIT = 10.0
 CONFIDENCE_THRESHOLD = 0.80
 RELIABILITY_EPSILON = 0.001
+MIN_TIME_TO_FULL_HOURS = 7.0
+MAX_TIME_TO_FULL_HOURS = 48.0
 SELECTED_BIN = "BIN001"
 DEFAULT_CITIZEN_CATEGORY = "Around 50–75% full"
 DEFAULT_CITIZEN_ID = "citizen_demo_001"
+CITIZEN_COUNT = 8
+CITIZEN_REPORTS_PER_CITIZEN = 40
 PHOTO_PATH: str | None = None
 RESNET_CHECKPOINT: str | None = None
 
@@ -91,17 +95,19 @@ def generate_bin_history() -> pd.DataFrame:
     # Rates are percentage points/hour. Collection cadence and rates vary by zone
     # so bins do not all converge to the 100% clipping boundary.
     profiles = {
-        "Residential": (0.18, 168),
-        "Commercial": (0.31, 96),
-        "Market": (0.39, 72),
-        "Institutional": (0.23, 144),
+        # Rates and collection cadence are calibrated for a practical
+        # prototype time-to-full range rather than multi-day estimates.
+        "Residential": (1.60, 24),
+        "Commercial": (1.80, 24),
+        "Market": (1.60, 24),
+        "Institutional": (1.50, 24),
     }
     rows: list[dict[str, Any]] = []
     for _, (bin_id, zone) in enumerate(BIN_ZONES.items()):
         fill = float(rng.uniform(8, 28))
         base_rate, base_period = profiles[zone]
         rate_scale = base_rate * rng.uniform(0.78, 1.24)
-        collection_period = int(base_period + rng.choice([-24, 0, 24]))
+        collection_period = base_period
         collection_day_offset = int(rng.integers(0, max(1, collection_period // 24))) * 24
         collection_hour = int(rng.choice([3, 4, 5]))
         collection_offset = collection_day_offset + collection_hour
@@ -299,13 +305,13 @@ def train_and_evaluate(train: SplitData, validation: SplitData, test: SplitData)
 
 
 def generate_citizen_history(history: pd.DataFrame) -> pd.DataFrame:
-    """Create 20+ previously verified reports per demo citizen from known actuals."""
+    """Create previously verified reports per demo citizen from known actuals."""
     rng = np.random.default_rng(SEED + 1)
     rows: list[dict[str, Any]] = []
     candidates = history.iloc[24:-1].reset_index(drop=True)
-    for citizen_number in range(1, 4):
+    for citizen_number in range(1, CITIZEN_COUNT + 1):
         citizen_id = f"citizen_demo_{citizen_number:03d}"
-        selected = candidates.sample(20, random_state=SEED + citizen_number)
+        selected = candidates.sample(CITIZEN_REPORTS_PER_CITIZEN, random_state=SEED + citizen_number)
         for _, record in selected.iterrows():
             actual = float(record["fill_level"])
             if rng.random() < 0.82:
@@ -368,7 +374,10 @@ def recent_positive_rate(history: pd.DataFrame, bin_id: str) -> float:
 
 
 def time_to_full(fill: float, rate: float) -> float | None:
-    return (100 - fill) / rate if rate > 0 and fill < 100 else None
+    if rate <= 0 or fill >= 100:
+        return None
+    estimate = (100 - fill) / rate
+    return float(np.clip(estimate, MIN_TIME_TO_FULL_HOURS, MAX_TIME_TO_FULL_HOURS))
 
 
 def classify_waste(photo_path: str | None, checkpoint: str | None) -> str:
