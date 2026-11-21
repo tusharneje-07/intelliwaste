@@ -335,7 +335,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
     [448, 548, 38, 33], [510, 532, 63, 31], [598, 548, 31, 42], [650, 531, 59, 29], [716, 560, 29, 38],
   ];
   const changeZoom = (nextZoom: number) => {
-    setZoom(Math.min(1.8, Math.max(0.75, Number(nextZoom.toFixed(2)))));
+    setZoom(Math.min(2, Math.max(1, Number(nextZoom.toFixed(2)))));
     setPan({ x: 0, y: 0 });
   };
   const baseX = 410 * (1 - zoom);
