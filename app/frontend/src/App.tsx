@@ -254,7 +254,7 @@ function App() {
         <header className="topbar">
           <button className="mobile-menu" onClick={() => setMobileNav((current) => !current)} aria-label="Toggle navigation"><Menu size={20} /></button>
           <div className="breadcrumbs"><span>IntelliWaste</span><ChevronRight size={14} /><strong>{activeTab === "dashboard" ? "Dashboard" : activeTab === "test" ? "Test workspace" : "Evaluation"}</strong></div>
-          <div className="top-actions"><span className="environment-pill"><span className="status-dot" /> Synthetic environment</span><div className="avatar">TN</div></div>
+          <div className="top-actions"><span className="environment-pill"><span className="status-dot" /> Synthetic environment</span></div>
         </header>
         <div className="content">
           {activeTab === "dashboard" && <Dashboard summary={summary.data} bins={bins.data?.bins ?? []} loading={summary.isLoading || bins.isLoading} />}
@@ -267,7 +267,7 @@ function App() {
 }
 
 function NavButton({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
-  return <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}>{icon}<span>{label}</span>{active && <ChevronRight size={14} className="nav-chevron" />}</button>;
+  return <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick} title={label} aria-label={label}>{icon}<span>{label}</span>{active && <ChevronRight size={14} className="nav-chevron" />}</button>;
 }
 
 function Dashboard({ summary, bins, loading }: { summary?: Summary; bins: Bin[]; loading: boolean }) {
@@ -280,7 +280,7 @@ function Dashboard({ summary, bins, loading }: { summary?: Summary; bins: Bin[];
 
   if (loading) return <LoadingState label="Loading the city model..." />;
   if (!summary) return <ErrorState />;
-  return <PageFrame eyebrow="Operational overview" title="City waste pulse" intro="A clear read on the synthetic city’s fill levels, model signal, and collection rhythm." action={<span className="data-window"><Activity size={15} /> {formatDate(summary.date_start)} — {formatDate(summary.date_end)}</span>}>
+  return <PageFrame eyebrow="Operational overview" title="IntelliWaste" intro="City waste pulse — a clear read on the synthetic city’s fill levels, model signal, and collection rhythm." action={<span className="data-window"><Activity size={15} /> {formatDate(summary.date_start)} — {formatDate(summary.date_end)}</span>}>
     <div className="metric-grid">
       <MetricCard icon={<Database size={18} />} label="Total bins" value={summary.total_bins.toString()} meta="Across four zones" accent="sage" />
       <MetricCard icon={<Waves size={18} />} label="Historical records" value={summary.historical_records.toLocaleString()} meta="Hourly observations" accent="blue" />
