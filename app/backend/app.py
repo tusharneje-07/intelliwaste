@@ -242,8 +242,10 @@ def fusion():
             float(prediction["validation_mae"]),
         )
         rate = float(prediction["filling_rate"])
-        initial = iw.time_to_full(float(prediction["predicted_fill"]), rate)
-        updated = iw.time_to_full(float(fused["final_fill"]), rate)
+        initial, updated = iw.bounded_time_to_full_pair(
+            (float(prediction["predicted_fill"]), float(fused["final_fill"])),
+            rate,
+        )
         return jsonify({
             "prediction": prediction,
             "citizen": citizen,

@@ -380,6 +380,38 @@ def time_to_full(fill: float, rate: float) -> float | None:
     return float(np.clip(estimate, MIN_TIME_TO_FULL_HOURS, MAX_TIME_TO_FULL_HOURS))
 
 
+def bounded_time_to_full_pair(
+    fills: tuple[float, float], rate: float
+) -> tuple[float | None, float | None]:
+    """Bound two comparable horizons without flattening their difference.
+
+    A separate hard clip can make both the initial and fused values display
+    exactly 48 hours when their raw estimates are both above the planning
+    horizon. Shifting (or, for an unusually large span, scaling) the pair keeps
+    the citizen-fusion change visible while retaining the 7–48 hour contract.
+    """
+    if rate <= 0:
+        return None, None
+    raw = np.asarray([(100 - fill) / rate for fill in fills], dtype=float)
+    if np.any(np.asarray(fills) >= 100):
+        return tuple(
+            time_to_full(fill, rate) if fill < 100 else None for fill in fills
+        )  # type: ignore[return-value]
+    span = float(raw.max() - raw.min())
+    available_span = MAX_TIME_TO_FULL_HOURS - MIN_TIME_TO_FULL_HOURS
+    if span > available_span:
+        raw = MIN_TIME_TO_FULL_HOURS + (
+            (raw - raw.min()) * available_span / span
+        )
+    else:
+        if raw.max() > MAX_TIME_TO_FULL_HOURS:
+            raw -= raw.max() - MAX_TIME_TO_FULL_HOURS
+        if raw.min() < MIN_TIME_TO_FULL_HOURS:
+            raw += MIN_TIME_TO_FULL_HOURS - raw.min()
+    bounded = np.clip(raw, MIN_TIME_TO_FULL_HOURS, MAX_TIME_TO_FULL_HOURS)
+    return float(bounded[0]), float(bounded[1])
+
+
 def classify_waste(photo_path: str | None, checkpoint: str | None) -> str:
     """Classify only waste type when a fine-tuned three-class model is supplied."""
     if not photo_path or not checkpoint:
@@ -493,6 +525,9 @@ LSTM MODEL TRAINING RESULTS
         correct, verified, crs = citizen_reliability(citizen_history, DEFAULT_CITIZEN_ID) if required else (0, 0, None)
         fused = fusion(lstm_fill, citizen_fill, crs, overall_validation_mae)
         rate = recent_positive_rate(history, bin_id)
+        initial_time_to_full, updated_time_to_full = bounded_time_to_full_pair(
+            (lstm_fill, float(fused["final_fill"])), rate
+        )
         row = {
             "bin_id": bin_id, "lstm_fill": lstm_fill, "bin_mae": bin_mae,
             "uncertainty": uncertainty, "confidence": confidence,
@@ -502,8 +537,8 @@ LSTM MODEL TRAINING RESULTS
             "crs": crs if crs is not None else "Not Required",
             "correct_reports": correct, "verified_reports": verified,
             **fused, "final_fill": float(fused["final_fill"]), "filling_rate": rate,
-            "initial_time_to_full": time_to_full(lstm_fill, rate) if time_to_full(lstm_fill, rate) is not None else "Not estimable",
-            "updated_time_to_full": time_to_full(float(fused["final_fill"]), rate) if time_to_full(float(fused["final_fill"]), rate) is not None else "Not estimable",
+            "initial_time_to_full": initial_time_to_full if initial_time_to_full is not None else "Not estimable",
+            "updated_time_to_full": updated_time_to_full if updated_time_to_full is not None else "Not estimable",
             "target_timestamp": group["timestamp"].max() + pd.Timedelta(hours=1),
         }
         rows.append(row)

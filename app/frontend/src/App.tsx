@@ -198,7 +198,7 @@ function formatPercent(value: number | null | undefined) {
 
 function formatHours(value: number | null | undefined) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "Not estimable";
-  return `${value.toFixed(1)} h`;
+  return `${value.toFixed(2)} h`;
 }
 
 function formatDate(value: string) {

@@ -54,8 +54,9 @@ def make_results(history: pd.DataFrame, citizen_history: pd.DataFrame, model: An
         )
         fused = iw.fusion(lstm_fill, citizen_fill, crs, overall_mae)
         rate = iw.recent_positive_rate(history, bin_id)
-        initial = iw.time_to_full(lstm_fill, rate)
-        updated = iw.time_to_full(float(fused["final_fill"]), rate)
+        initial, updated = iw.bounded_time_to_full_pair(
+            (lstm_fill, float(fused["final_fill"])), rate
+        )
         rows.append({
             "bin_id": bin_id, "target_timestamp": group["timestamp"].max() + pd.Timedelta(hours=1),
             "lstm_fill": lstm_fill, "bin_mae": bin_mae, "uncertainty": uncertainty,
