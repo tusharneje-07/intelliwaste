@@ -314,8 +314,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
   }, []);
   const mapWidth = Math.max(620, width);
   const scale = mapWidth / 820;
-  const zoomedScale = scale * zoom;
-  const mapHeight = Math.round(650 * zoomedScale);
+  const mapHeight = Math.round(650 * scale);
   const positions: Record<string, [number, number]> = { BIN001: [125, 135], BIN002: [260, 185], BIN003: [175, 300], BIN004: [465, 125], BIN005: [625, 180], BIN006: [530, 285], BIN007: [170, 500], BIN008: [350, 445], BIN009: [500, 505], BIN010: [690, 345], BIN011: [730, 470], BIN012: [650, 575] };
   const horizontalRoads = [75, 153, 238, 330, 420, 516, 600];
   const verticalRoads = [94, 190, 292, 395, 500, 610, 724];
@@ -334,8 +333,9 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
     [448, 548, 38, 33], [510, 532, 63, 31], [598, 548, 31, 42], [650, 531, 59, 29], [716, 560, 29, 38],
   ];
   const changeZoom = (nextZoom: number) => setZoom(Math.min(1.8, Math.max(0.75, Number(nextZoom.toFixed(2)))));
-  return <div className="map-wrap" ref={wrapper}><div className="map-stage-viewport"><Stage width={Math.round(820 * zoomedScale)} height={mapHeight} scaleX={zoomedScale} scaleY={zoomedScale} onWheel={(event) => { event.evt.preventDefault(); changeZoom(zoom * (event.evt.deltaY > 0 ? 0.9 : 1.1)); }}>
+  return <div className="map-wrap" ref={wrapper}><div className="map-stage-viewport"><Stage width={mapWidth} height={mapHeight} scaleX={scale} scaleY={scale} onWheel={(event) => { event.evt.preventDefault(); changeZoom(zoom * (event.evt.deltaY > 0 ? 0.9 : 1.1)); }}>
     <Layer>
+      <Group x={410 * (1 - zoom)} y={325 * (1 - zoom)} scaleX={zoom} scaleY={zoom}>
       <Rect x={0} y={0} width={820} height={650} fill="#eef0ef" cornerRadius={20} />
       <Rect x={0} y={0} width={52} height={650} fill="#dce7e9" cornerRadius={20} />
       <Rect x={770} y={0} width={50} height={650} fill="#dce7e9" cornerRadius={20} />
@@ -369,6 +369,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
           <Text text={bin.bin_id} fontFamily="DM Mono" fontSize={7} fill="#345044" align="center" width={50} x={-25} y={20} />
         </Group>;
       })}
+      </Group>
     </Layer>
   </Stage></div>
     <div className="map-controls" aria-label="Map zoom controls">
