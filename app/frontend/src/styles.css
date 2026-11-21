@@ -117,8 +117,7 @@ select { border: 1px solid var(--line); background: #fff; color: var(--ink); bor
 .fill-value { font-weight: 800; }
 .history-panel { padding-bottom: 10px; }
 .chart-large { height: 270px; padding: 0 22px; }
-.chart-small { height: 220px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #edf1ec; }
-.chart-caption { color: #8b968e; font: 10px "DM Mono", monospace; padding-left: 3px; }
+.chart-small { height: 190px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #edf1ec; }
 .test-layout { display: grid; grid-template-columns: minmax(300px, .7fr) minmax(0, 1.3fr); gap: 17px; }
 .test-controls, .prediction-panel { padding-bottom: 22px; }
 .field-label { display: block; margin: 4px 22px 15px; color: #68786d; font: 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
@@ -134,7 +133,9 @@ select { border: 1px solid var(--line); background: #fff; color: var(--ink); bor
 .toggle { width: 36px; height: 21px; padding: 3px; background: #d7dfd8; border: 0; border-radius: 99px; text-align: left; transition: .2s ease; }
 .toggle span { display: block; width: 15px; height: 15px; margin: 0; border-radius: 50%; background: #fff; transition: transform .2s ease; }
 .toggle.on { background: #4d9364; }.toggle.on span { transform: translateX(15px); }
-.field-label.compact { margin: 14px 0 0; }.field-label.compact input { width: 100px; }
+.field-label.compact { margin: 14px 0 0; }
+.field-label.compact input { width: 140px; height: 36px; padding: 0 10px; border: 1px solid #cbdccc; border-radius: 8px; background: #ffffff; color: var(--ink); font: 12px "DM Mono", monospace; outline: none; }
+.field-label.compact input:focus { border-color: #6aa178; box-shadow: 0 0 0 3px #6aa17822; }
 .primary-button { border: 0; border-radius: 8px; background: var(--sage); color: white; min-height: 37px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-size: 11px; font-weight: 700; transition: .2s ease; }
 .primary-button:hover { background: var(--sage-dark); transform: translateY(-1px); }.primary-button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .full-width { width: calc(100% - 44px); margin: 0 22px; }
