@@ -146,15 +146,65 @@ def run_prediction(bin_id: str, demo_confidence: float | None = None) -> dict[st
     confidence = actual_confidence if demo_confidence is None else float(demo_confidence)
     confidence = min(1.0, max(0.0, confidence))
     uncertainty = 1.0 - confidence
+    requires_verification = confidence < iw.CONFIDENCE_THRESHOLD
+    decision = "Request Citizen Verification" if requires_verification else "Retain LSTM Prediction"
+    predicted_fill = float(result["predicted_fill"])
+    time_to_full_hours = result["time_to_full_hours"]
     result.update({
         "actual_confidence": actual_confidence,
         "confidence": confidence,
         "uncertainty": uncertainty,
         "confidence_threshold": iw.CONFIDENCE_THRESHOLD,
         "demo_override_active": demo_confidence is not None,
-        "requires_verification": confidence < iw.CONFIDENCE_THRESHOLD,
-        "decision": "Request Citizen Verification" if confidence < iw.CONFIDENCE_THRESHOLD else "Retain LSTM Prediction",
+        "requires_verification": requires_verification,
+        "decision": decision,
         "validation_mae": predict_cache()[bin_id]["validation_mae"],
+        "steps": [
+            {
+                "title": "LSTM prediction",
+                "formula": "Fv = LSTM(last 24 hourly observations)",
+                "value": f"{predicted_fill:.2f}%",
+            },
+            {
+                "title": "Confidence decision",
+                "formula": "Cv = 1 - Uv",
+                "value": (
+                    f"{confidence:.1%} {'<' if requires_verification else '≥'} "
+                    f"{iw.CONFIDENCE_THRESHOLD:.0%} threshold"
+                ),
+            },
+            {
+                "title": "Verification branch",
+                "formula": "Cv < threshold → request citizen verification",
+                "value": (
+                    "Citizen verification required; waiting for fill range."
+                    if requires_verification
+                    else "Not required; retain the LSTM prediction."
+                ),
+            },
+            {
+                "title": "Final fill level",
+                "formula": (
+                    "Ffinal = Fv (no fusion required)"
+                    if not requires_verification
+                    else "Ffinal = pending citizen fusion"
+                ),
+                "value": (
+                    f"{predicted_fill:.2f}%"
+                    if not requires_verification
+                    else f"Provisional {predicted_fill:.2f}%"
+                ),
+            },
+            {
+                "title": "Time-to-full",
+                "formula": "T = (100 - F) / Gt",
+                "value": (
+                    f"{time_to_full_hours:.2f} hours"
+                    if time_to_full_hours is not None
+                    else "Not estimable"
+                ),
+            },
+        ],
     })
     return result
 

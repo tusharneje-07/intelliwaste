@@ -102,6 +102,7 @@ interface Prediction extends Bin {
   requires_verification: boolean;
   decision: string;
   validation_mae: number;
+  steps: FusionStep[];
 }
 
 interface FusionStep {
@@ -451,15 +452,20 @@ function TestWorkspace({ bins }: { bins: Bin[] }) {
         <PanelHeading icon={<BrainCircuit size={17} />} title="Model signal" meta={prediction?.demo_override_active ? "Demo override active" : "Validation-derived confidence"} />
         {prediction ? <PredictionCard prediction={prediction} /> : <EmptyState icon={<Sparkles size={24} />} title="Ready when you are" text="Run a prediction to see the actual model output and confidence decision." />}
       </section>
-    </div>
-    {prediction?.requires_verification && <CitizenForm citizens={citizens?.citizens ?? []} citizenId={citizenId} setCitizenId={setCitizenId} lower={lower} setLower={setLower} upper={upper} setUpper={setUpper} citizen={selectedCitizen} citizenFill={citizenFill} onSubmit={() => fusionMutation.mutate({ bin_id: selectedBin, citizen_id: citizenId, lower_limit: Number(lower), upper_limit: Number(upper), ...(override ? { demo_confidence: Number(demoConfidence) } : {}) })} pending={fusionMutation.isPending} />}
-    {fusionMutation.data && <FusionSteps result={fusionMutation.data} />}
+     </div>
+     {prediction && !fusionMutation.data && <PredictionFlow prediction={prediction} />}
+     {prediction?.requires_verification && <CitizenForm citizens={citizens?.citizens ?? []} citizenId={citizenId} setCitizenId={setCitizenId} lower={lower} setLower={setLower} upper={upper} setUpper={setUpper} citizen={selectedCitizen} citizenFill={citizenFill} onSubmit={() => fusionMutation.mutate({ bin_id: selectedBin, citizen_id: citizenId, lower_limit: Number(lower), upper_limit: Number(upper), ...(override ? { demo_confidence: Number(demoConfidence) } : {}) })} pending={fusionMutation.isPending} />}
+     {fusionMutation.data && <FusionSteps result={fusionMutation.data} />}
     <section className="panel classifier-panel"><PanelHeading icon={<Upload size={17} />} title="Independent waste classifier" meta="Classification only — never used for fill fusion" /><div className="classifier-row"><div><strong>Organic · Recyclable · E-waste</strong><p>Upload a citizen photo when a fine-tuned three-class checkpoint is configured.</p></div><label className="upload-button"><Upload size={15} />{uploadedFile ? uploadedFile.name : "Choose image"}<input type="file" accept="image/*" onChange={(event) => setUploadedFile(event.target.files?.[0] ?? null)} /></label><button className="ghost-button" onClick={() => classifierMutation.mutate()} disabled={classifierMutation.isPending}>Check classifier</button></div>{classifierMutation.data && <div className="info-banner"><CircleHelp size={16} />{classifierMutation.data.message}</div>}</section>
   </PageFrame>;
 }
 
 function PredictionCard({ prediction }: { prediction: Prediction }) {
   return <div className="prediction-card"><div className="prediction-main"><span className="eyebrow">Next-hour LSTM estimate</span><strong>{formatPercent(prediction.predicted_fill)}</strong><span className="confidence-chip" style={{ "--chip": prediction.confidence >= 0.8 ? "#34795a" : "#c15b43" } as React.CSSProperties}>{prediction.confidence >= 0.8 ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}{formatPercent(prediction.confidence * 100)} confidence</span></div><div className="prediction-stats"><div><span>Uncertainty</span><strong>{formatPercent(prediction.uncertainty * 100)}</strong></div><div><span>Threshold</span><strong>{formatPercent(prediction.confidence_threshold * 100)}</strong></div><div><span>Decision</span><strong className={prediction.requires_verification ? "text-coral" : "text-sage"}>{prediction.requires_verification ? "Verification required" : "Retain LSTM"}</strong></div></div></div>;
+}
+
+function PredictionFlow({ prediction }: { prediction: Prediction }) {
+  return <section className="panel fusion-panel prediction-flow-panel"><div className="fusion-header"><PanelHeading icon={<Activity size={17} />} title="Step-by-step prediction" meta={prediction.requires_verification ? "Citizen fusion pending" : "LSTM prediction retained"} /><div className="final-result"><span>{prediction.requires_verification ? "Provisional fill" : "Final fill"}</span><strong>{formatPercent(prediction.predicted_fill)}</strong></div></div><div className="step-grid">{prediction.steps.map((step, index) => <details className="calculation-step" key={step.title} open><summary><span className="step-number">{String(index + 1).padStart(2, "0")}</span><strong>{step.title}</strong><ChevronRight size={15} /></summary><div><code>{step.formula}</code><p>{step.value}</p></div></details>)}</div></section>;
 }
 
 function CitizenForm({ citizens, citizenId, setCitizenId, lower, setLower, upper, setUpper, citizen, citizenFill, onSubmit, pending }: { citizens: Citizen[]; citizenId: string; setCitizenId: (value: string) => void; lower: string; setLower: (value: string) => void; upper: string; setUpper: (value: string) => void; citizen?: Citizen; citizenFill: number; onSubmit: () => void; pending: boolean }) {
