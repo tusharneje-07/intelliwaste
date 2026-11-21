@@ -117,7 +117,6 @@ select { border: 1px solid var(--line); background: #fff; color: var(--ink); bor
 .fill-value { font-weight: 800; }
 .history-panel { padding-bottom: 10px; }
 .chart-large { height: 270px; padding: 0 22px; }
-.chart-small { height: 190px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #edf1ec; }
 .test-layout { display: grid; grid-template-columns: minmax(300px, .7fr) minmax(0, 1.3fr); gap: 17px; }
 .test-controls, .prediction-panel { padding-bottom: 22px; }
 .field-label { display: block; margin: 4px 22px 15px; color: #68786d; font: 10px "DM Mono", monospace; text-transform: uppercase; letter-spacing: .04em; }
