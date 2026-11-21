@@ -25,8 +25,12 @@ import {
   Waves,
   X,
 } from "lucide-react";
-import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip as MapTooltip, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Popup, Tooltip as MapTooltip, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
+import { setWorkerUrl } from "maplibre-gl";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Area,
   AreaChart,
@@ -45,6 +49,8 @@ import {
   YAxis,
 } from "recharts";
 import { create } from "zustand";
+
+setWorkerUrl(maplibreWorkerUrl);
 
 const API = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -324,10 +330,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
   };
   return <div className="map-wrap real-map-wrap">
     <MapContainer center={mapCenter} zoom={13} minZoom={13} maxZoom={16} zoomControl={false} className="real-map">
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-      />
+      <OpenFreeMapLayer />
       <MapZoomControls center={mapCenter} />
       {bins.map((bin) => {
         const position = coordinates[bin.bin_id];
@@ -376,6 +379,34 @@ function MapZoomControls({ center }: { center: [number, number] }) {
     <button onClick={() => map.zoomOut()} aria-label="Zoom out">−</button>
     <button onClick={() => map.setView(center, 13)} aria-label="Reset map zoom">Reset</button>
   </div>;
+}
+
+function OpenFreeMapLayer() {
+  const map = useMap();
+  useEffect(() => {
+    const attribution = 'OpenFreeMap · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a>';
+    const glLayer = maplibreGL({
+      style: "https://tiles.openfreemap.org/styles/positron",
+    }).addTo(map);
+    const glMap = glLayer.getMaplibreMap();
+    const removeLabels = () => {
+      const layers = glMap.getStyle()?.layers ?? [];
+      layers
+        .filter((layer) => layer.type === "symbol")
+        .forEach((layer) => {
+          if (glMap.getLayer(layer.id)) glMap.removeLayer(layer.id);
+        });
+    };
+    map.attributionControl.addAttribution(attribution);
+    if (glMap.isStyleLoaded()) removeLabels();
+    else glMap.once("load", removeLabels);
+    return () => {
+      glMap.off("load", removeLabels);
+      map.attributionControl.removeAttribution(attribution);
+      map.removeLayer(glLayer);
+    };
+  }, [map]);
+  return null;
 }
 
 function BinSnapshot({ detail }: { detail: BinDetail }) {
