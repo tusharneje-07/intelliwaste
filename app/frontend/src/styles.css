@@ -72,14 +72,20 @@ h1 { margin: 7px 0 8px; font-size: clamp(28px, 3vw, 43px); line-height: 1.04; le
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .7fr); gap: 17px; align-items: stretch; }
 .map-panel { min-width: 0; overflow: hidden; }
 .map-wrap { padding: 0 18px 16px; position: relative; overflow: hidden; }
-.map-stage-viewport { height: min(520px, calc(100vw * .72)); max-height: 520px; min-height: 360px; overflow: hidden; border-radius: 14px; scrollbar-color: #b8c9ba #edf2ed; }
-.map-stage-viewport canvas { display: block; max-width: none !important; height: auto !important; cursor: grab; }
-.map-stage-viewport canvas:active { cursor: grabbing; }
-.map-controls { position: absolute; right: 29px; top: 13px; display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid #d6dfd6; background: #ffffffed; border-radius: 9px; box-shadow: 0 6px 18px #20392b16; z-index: 2; }
+.real-map-wrap { padding-bottom: 14px; }
+.real-map { height: min(520px, calc(100vw * .72)); min-height: 360px; width: 100%; overflow: hidden; border: 1px solid #d8e0d9; border-radius: 14px; background: #dfe9e6; }
+.real-map .leaflet-tile { filter: saturate(.82) brightness(1.03); }
+.real-map .leaflet-control-attribution { background: #fffffff0; color: #718078; font: 9px "DM Mono", monospace; }
+.real-map .leaflet-control-attribution a { color: #4d7b5c; }
+.real-map .leaflet-popup-content-wrapper { border-radius: 9px; }
+.real-map .leaflet-popup-content { color: #344c3c; font: 11px/1.5 "DM Mono", monospace; }
+.real-map .leaflet-tooltip { border: 1px solid #cbdaca; border-radius: 5px; color: #294636; font: 10px "DM Mono", monospace; box-shadow: 0 4px 12px #20392b20; }
+.map-controls { position: absolute; right: 29px; top: 13px; display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid #d6dfd6; background: #ffffffed; border-radius: 9px; box-shadow: 0 6px 18px #20392b16; z-index: 1000; }
 .map-controls button { min-width: 28px; height: 27px; border: 0; border-radius: 6px; background: transparent; color: #355444; font: 15px "DM Mono", monospace; }
 .map-controls button:hover { background: #e8f1e7; }
 .map-controls button:last-child { padding: 0 7px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
 .map-controls span { min-width: 37px; text-align: center; color: #78907e; font: 9px "DM Mono", monospace; }
+.map-map-note { position: absolute; left: 29px; bottom: 47px; z-index: 1000; padding: 6px 9px; border: 1px solid #d6dfd6; border-radius: 6px; background: #ffffffdf; color: #68796e; font: 9px "DM Mono", monospace; pointer-events: none; }
 .map-legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 10px 7px 0; color: #728076; font: 10px "DM Mono", monospace; }
 .map-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .map-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
