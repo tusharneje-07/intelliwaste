@@ -30,6 +30,17 @@ only to the documented five-band fill-status classification:
 Do not use photographs for fill estimation. ResNet50 is classification-only
 and must not be included in fill-level fusion.
 
+## Experimental report
+
+After the pipeline has produced `data/`, `model/`, and `results/` artifacts,
+generate the local PDF report with:
+
+```bash
+uv run python doc/build_report.py
+```
+
+The generated PDF and supporting evidence files stay under ignored `doc/`.
+
 ## Generated files and logs
 
 Generated data, models, and visualizations belong in their existing

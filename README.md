@@ -32,6 +32,18 @@ uv run python test.py
 uv run python explain.py
 ```
 
+Generate the local experimental report and its traceability files:
+
+```bash
+uv run python doc/build_report.py
+```
+
+This creates `doc/IntelliWaste_Experimental_Results_Report.pdf`,
+`doc/experiment_summary.json`, `doc/test_predictions.csv`,
+`doc/training_history.csv`, and `doc/generated_figures/`. The complete
+`doc/` directory is intentionally ignored by Git because it contains
+generated report artifacts.
+
 `train.py` generates the synthetic data and trains the LSTM. `test.py` loads
 the trained model, evaluates predictions, performs citizen fusion, and saves a
 dashboard plus validation, history, and confidence diagnostic images.
