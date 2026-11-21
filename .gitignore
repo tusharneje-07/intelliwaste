@@ -1,6 +1,11 @@
 .venv/
 model/
 doc/
+app/frontend/node_modules/
+app/frontend/dist/
+app/frontend/.vite/
+app/frontend/.env
+app/frontend/.env.*
 __pycache__/
 *.py[cod]
 .log/

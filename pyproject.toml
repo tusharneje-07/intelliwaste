@@ -10,6 +10,8 @@ dependencies = [
     "seaborn>=0.13",
     "reportlab>=4.2",
     "pypdf>=6.0",
+    "flask>=3.1",
+    "flask-cors>=6.0",
     "tensorflow>=2.20",
 ]
 
