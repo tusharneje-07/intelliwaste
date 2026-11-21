@@ -306,6 +306,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
   const wrapper = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(820);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   useEffect(() => {
     if (!wrapper.current) return;
     const observer = new ResizeObserver((entries) => setWidth(Math.max(620, Math.floor(entries[0].contentRect.width))));
@@ -332,10 +333,23 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
     [86, 551, 42, 28], [151, 535, 63, 39], [240, 556, 32, 25], [295, 534, 55, 34], [365, 553, 38, 28],
     [448, 548, 38, 33], [510, 532, 63, 31], [598, 548, 31, 42], [650, 531, 59, 29], [716, 560, 29, 38],
   ];
-  const changeZoom = (nextZoom: number) => setZoom(Math.min(1.8, Math.max(0.75, Number(nextZoom.toFixed(2)))));
+  const changeZoom = (nextZoom: number) => {
+    setZoom(Math.min(1.8, Math.max(0.75, Number(nextZoom.toFixed(2)))));
+    setPan({ x: 0, y: 0 });
+  };
+  const baseX = 410 * (1 - zoom);
+  const baseY = 325 * (1 - zoom);
+  const minX = zoom >= 1 ? 820 * (1 - zoom) : 0;
+  const maxX = zoom >= 1 ? 0 : 820 * (1 - zoom);
+  const minY = zoom >= 1 ? 650 * (1 - zoom) : 0;
+  const maxY = zoom >= 1 ? 0 : 650 * (1 - zoom);
+  const dragBound = (position: { x: number; y: number }) => ({
+    x: Math.min(maxX, Math.max(minX, position.x)),
+    y: Math.min(maxY, Math.max(minY, position.y)),
+  });
   return <div className="map-wrap" ref={wrapper}><div className="map-stage-viewport"><Stage width={mapWidth} height={mapHeight} scaleX={scale} scaleY={scale} onWheel={(event) => { event.evt.preventDefault(); changeZoom(zoom * (event.evt.deltaY > 0 ? 0.9 : 1.1)); }}>
     <Layer>
-      <Group x={410 * (1 - zoom)} y={325 * (1 - zoom)} scaleX={zoom} scaleY={zoom}>
+      <Group x={baseX + pan.x} y={baseY + pan.y} scaleX={zoom} scaleY={zoom} draggable={zoom !== 1} dragBoundFunc={dragBound} onDragEnd={(event) => setPan({ x: event.target.x() - baseX, y: event.target.y() - baseY })}>
       <Rect x={0} y={0} width={820} height={650} fill="#eef0ef" cornerRadius={20} />
       <Rect x={0} y={0} width={52} height={650} fill="#dce7e9" cornerRadius={20} />
       <Rect x={770} y={0} width={50} height={650} fill="#dce7e9" cornerRadius={20} />
@@ -376,7 +390,7 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
       <button onClick={() => changeZoom(zoom + 0.15)} aria-label="Zoom in">+</button>
       <span>{Math.round(zoom * 100)}%</span>
       <button onClick={() => changeZoom(zoom - 0.15)} aria-label="Zoom out">−</button>
-      <button onClick={() => setZoom(1)} aria-label="Reset map zoom">Reset</button>
+      <button onClick={() => changeZoom(1)} aria-label="Reset map zoom">Reset</button>
     </div>
     <div className="map-legend">{[["0–30%", "#3e9b6d"], ["30–60%", "#d4a72c"], ["60–80%", "#de7a37"], ["80–100%", "#d9564a"]].map(([label, color]) => <span key={label}><i style={{ background: color }} />{label}</span>)}</div>
   </div>;
