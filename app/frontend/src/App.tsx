@@ -25,7 +25,7 @@ import {
   Waves,
   X,
 } from "lucide-react";
-import { CircleMarker, MapContainer, Popup, Tooltip as MapTooltip, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Polygon, Popup, Tooltip as MapTooltip, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
 import { setWorkerUrl } from "maplibre-gl";
@@ -328,10 +328,50 @@ function CityMap({ bins, selectedBin, onSelect }: { bins: Bin[]; selectedBin: st
     BIN011: [18.5380, 73.8517],
     BIN012: [18.5088, 73.8705],
   };
+  const zoneRegions: Array<{
+    zone: Zone;
+    color: string;
+    labelPosition: [number, number];
+    boundary: [number, number][];
+  }> = [
+    {
+      zone: "Residential",
+      color: "#4f9b6d",
+      labelPosition: [18.5235, 73.8535],
+      boundary: [[18.509, 73.843], [18.510, 73.865], [18.531, 73.869], [18.537, 73.847]],
+    },
+    {
+      zone: "Commercial",
+      color: "#c58b2f",
+      labelPosition: [18.5335, 73.8665],
+      boundary: [[18.522, 73.856], [18.521, 73.878], [18.543, 73.881], [18.546, 73.854]],
+    },
+    {
+      zone: "Market",
+      color: "#c86357",
+      labelPosition: [18.5115, 73.869],
+      boundary: [[18.497, 73.847], [18.498, 73.879], [18.523, 73.883], [18.524, 73.860]],
+    },
+    {
+      zone: "Institutional",
+      color: "#5f83ad",
+      labelPosition: [18.523, 73.8405],
+      boundary: [[18.500, 73.830], [18.545, 73.830], [18.550, 73.856], [18.503, 73.858]],
+    },
+  ];
   return <div className="map-wrap real-map-wrap">
     <MapContainer center={mapCenter} zoom={13} minZoom={13} maxZoom={16} zoomControl={false} className="real-map">
       <OpenFreeMapLayer />
       <MapZoomControls center={mapCenter} />
+      {zoneRegions.map((region) => <Polygon
+        key={region.zone}
+        positions={region.boundary}
+        pathOptions={{ color: region.color, fillColor: region.color, fillOpacity: 0.13, weight: 2, opacity: 0.75 }}
+      >
+        <MapTooltip permanent direction="center" className="zone-map-label">
+          {region.zone}
+        </MapTooltip>
+      </Polygon>)}
       {bins.map((bin) => {
         const position = coordinates[bin.bin_id];
         if (!position) return null;
