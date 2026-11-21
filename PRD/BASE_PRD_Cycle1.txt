@@ -1,0 +1,817 @@
+# Project: IntelliWaste – Synthetic Data Generation, LSTM Training and Complete Prediction Pipeline
+
+Act as a Senior Machine Learning Engineer and Python Developer.
+
+Build a simple, working prototype of **IntelliWaste**, an AI-based waste-management system that predicts bin fill levels using an LSTM model, requests citizen verification when prediction confidence is low, combines both estimates using reliability-based data fusion, and independently classifies waste using ResNet50.
+
+The implementation must follow the methodology and mathematical formulations specified below.
+
+Do not introduce unnecessary algorithms, complicated mathematical formulations, or additional modules.
+
+## 1. Main Objectives
+
+The implementation must perform the following tasks in sequence:
+
+1. Generate realistic synthetic historical data for at least 10 waste bins representing a medium-sized city area.
+2. Train an LSTM model using the generated historical data.
+3. Evaluate the trained LSTM model.
+4. Predict the future fill level for each bin.
+5. Calculate prediction confidence.
+6. Request citizen verification when confidence is below 80%.
+7. Simulate or collect citizen-selected fill categories.
+8. Calculate Citizen Reliability Scores (CRS).
+9. Combine LSTM and citizen fill estimates using reliability-based data fusion.
+10. Calculate the final estimated fill level and time-to-full.
+11. Process citizen-submitted photographs independently using ResNet50 for waste classification.
+12. Display all results in a simple, understandable format.
+
+**Important restrictions:**
+
+- Do not use physical IoT sensors.
+- Do not implement Method B (photo-based fill estimation).
+- Do not calculate fill percentage from photographs.
+- Do not include overflow probability or overflow probability calculations.
+- Do not use photographs as a source for fill-level fusion.
+- ResNet50 must only classify waste into Organic, Recyclable, and E-waste.
+- Use Method A: Citizen selects a fill category.
+- Use only two sources for fill-level fusion: LSTM and citizen reports.
+
+---
+
+## 2. Synthetic Historical Data Generation
+
+Before training the LSTM model, generate synthetic historical data.
+
+### A. Number of Bins
+
+Generate data for at least 12 waste bins.
+
+These bins should represent different areas of a medium-sized city.
+
+Use the following distribution:
+
+| Bin ID | Location Type |
+|---|---|
+| BIN001 | Residential |
+| BIN002 | Residential |
+| BIN003 | Residential |
+| BIN004 | Commercial |
+| BIN005 | Commercial |
+| BIN006 | Commercial |
+| BIN007 | Market |
+| BIN008 | Market |
+| BIN009 | Market |
+| BIN010 | Institutional |
+| BIN011 | Institutional |
+| BIN012 | Institutional |
+
+Each bin should have different waste accumulation behavior depending on its location.
+
+### B. Historical Data Duration
+
+Generate at least 60 days of hourly historical observations for each bin.
+
+Each record must contain:
+
+| Column | Description |
+|---|---|
+| bin_id | Unique bin identifier |
+| timestamp | Date and time of observation |
+| fill_level | Bin fill percentage |
+| hour | Hour of the day |
+| day_of_week | Day of the week |
+| month | Month of observation |
+| zone_type | Residential, Commercial, Market, or Institutional |
+| filling_rate | Historical fill accumulation rate |
+| collection_event | Whether a collection occurred |
+
+### C. Data Generation Rules
+
+The generated data must resemble realistic waste accumulation.
+
+Follow these rules:
+
+- Fill levels must remain between 0% and 100%.
+- Different zones must have different accumulation rates.
+- Commercial and market bins should generally accumulate waste faster than residential bins.
+- Include variation between weekdays and weekends.
+- Include higher and lower accumulation periods during different hours.
+- Include collection events where the fill level decreases after garbage collection.
+- Add small random variations to prevent perfectly repeating patterns.
+- Use a fixed random seed, such as `42`, to make the generated dataset reproducible.
+
+Do not generate completely independent random fill percentages. Generate time-dependent observations where previous fill levels influence future fill levels.
+
+Save the generated dataset as:
+
+`synthetic_bin_history.csv`
+
+Print the number of bins, number of records, date range, and a sample of the generated data.
+
+---
+
+## 3. LSTM Model – Training and Prediction
+
+### A. Input Features
+
+The LSTM model must use the historical observations of each bin.
+
+Define the input sequence as:
+
+\[
+X_{i,t}=[F_{i,t-1},F_{i,t-2},...,F_{i,t-L},
+h_t,d_t,m_t,z_i,G_{i,t}]
+\]
+
+Where:
+
+- \(i\) = Bin identifier.
+- \(t\) = Current prediction timestamp.
+- \(F_{i,t-1},F_{i,t-2},...\) = Previous fill-level observations.
+- \(L\) = Historical sequence length.
+- \(h_t\) = Hour of observation.
+- \(d_t\) = Day of the week.
+- \(m_t\) = Month.
+- \(z_i\) = Bin location type.
+- \(G_{i,t}\) = Historical waste accumulation rate.
+
+For implementation, use a sequence length of 24 hours.
+
+The actual LSTM input must be a sequence matrix of shape:
+
+`(24, number_of_features)`
+
+Use suitable numerical encoding for time and location features. For example, use cyclical encoding for hour and weekday, and one-hot encoding for zone type.
+
+### B. Prediction Target
+
+The model must predict the bin's fill percentage at the next hourly observation.
+
+Define:
+
+\[
+F_{v,i,t}=LSTM(X_{i,t})
+\]
+
+Where:
+
+- \(F_{v,i,t}\) = LSTM-predicted fill level for bin \(i\) at target timestamp \(t\).
+- \(X_{i,t}\) = Historical input sequence.
+
+Keep the predicted fill level between 0% and 100%.
+
+The citizen's reported fill level must refer to the same bin and approximately the same target timestamp as the LSTM prediction. Do not combine estimates belonging to different bins or substantially different observation times.
+
+### C. LSTM Architecture
+
+Use a straightforward LSTM architecture:
+
+```text
+Input Layer
+    |
+LSTM Layer (64 units, return_sequences=True)
+    |
+Dropout (0.2)
+    |
+LSTM Layer (32 units)
+    |
+Dense Layer (16 units, ReLU)
+    |
+Dense Layer (1 unit, Sigmoid)
+    |
+Predicted Fill Percentage
+```
+
+Scale the target fill percentage to the range 0–1 during training and convert the model output back to 0–100%.
+
+### D. Model Training
+
+Use TensorFlow/Keras.
+
+Recommended configuration:
+
+| Parameter | Value |
+|---|---|
+| Lookback sequence | 24 hours |
+| Forecast horizon | 1 hour |
+| First LSTM layer | 64 units |
+| Second LSTM layer | 32 units |
+| Dropout | 0.2 |
+| Optimizer | Adam |
+| Loss function | Mean Squared Error |
+| Epochs | Up to 50 |
+| Batch size | 32 |
+| Early stopping | Enabled |
+
+Split the dataset chronologically:
+
+- 70% Training.
+- 15% Validation.
+- 15% Testing.
+
+Perform the split separately by bin or by chronological time boundaries across bins.
+
+Do not randomly split overlapping time-series windows.
+
+Fit preprocessing scalers using training data only.
+
+Save the trained model as:
+
+`intelliwaste_lstm.keras`
+
+### E. Model Evaluation
+
+Evaluate the LSTM using MAE and RMSE.
+
+Mean Absolute Error:
+
+\[
+MAE=\frac{1}{N}\sum_{i=1}^{N}|F_i-\hat F_i|
+\]
+
+Root Mean Square Error:
+
+\[
+RMSE=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(F_i-\hat F_i)^2}
+\]
+
+Where:
+
+- \(N\) = Number of test observations.
+- \(F_i\) = Actual fill percentage.
+- \(\hat F_i\) = LSTM-predicted fill percentage.
+
+Report both metrics in percentage points.
+
+Use validation MAE for the confidence and reliability calculations below. Use test MAE and RMSE only for final model evaluation.
+
+---
+
+## 4. Prediction Confidence Calculation
+
+The system must calculate prediction confidence using the validation error.
+
+Define a configurable maximum acceptable prediction error:
+
+\[
+E_{\max}=10
+\]
+
+Where the unit is percentage points.
+
+Calculate normalized uncertainty:
+
+\[
+U_v=\min\left(1,\frac{MAE_{val}}{E_{\max}}\right)
+\]
+
+Calculate confidence:
+
+\[
+\boxed{C_v=1-U_v}
+\]
+
+Where:
+
+- \(MAE_{val}\) = Validation MAE in percentage points.
+- \(E_{\max}\) = Maximum acceptable prediction error.
+- \(U_v\) = Normalized prediction uncertainty.
+- \(C_v\) = Prediction confidence, between 0 and 1.
+
+This is a simple validation-error-based confidence score, not a statistically calibrated probability.
+
+Use a configurable threshold:
+
+\[
+\theta=0.80
+\]
+
+Decision:
+
+```text
+IF C_v < 0.80:
+    Request citizen verification
+
+ELSE:
+    Retain the LSTM prediction
+```
+
+Calculate confidence separately for each bin using its validation prediction errors where sufficient validation observations are available. Otherwise, use the overall validation MAE and clearly label it as a global confidence score.
+
+---
+
+## 5. Citizen Participation – Method A
+
+When verification is required, the application must ask the citizen to select a fill category.
+
+Do not ask the citizen to enter a photograph-derived fill percentage.
+
+Use the following options:
+
+| Citizen Selection | Assigned Fill Level |
+|---|---:|
+| Empty | 0% |
+| Low | 25% |
+| Half | 50% |
+| High | 75% |
+| Full | 100% |
+| Around 50–75% full | 62.5% |
+
+For any range-based selection, calculate the midpoint:
+
+\[
+\boxed{F_c=\frac{L_c+U_c}{2}}
+\]
+
+Where:
+
+- \(F_c\) = Citizen-reported fill level.
+- \(L_c\) = Lower limit of the selected range.
+- \(U_c\) = Upper limit of the selected range.
+
+The script must support selecting a citizen category through a simple terminal input or a configurable demo value.
+
+For unattended demonstration, use a predefined default category such as `Around 50–75% full`.
+
+Record:
+
+- Citizen ID.
+- Bin ID.
+- Selected category.
+- Converted fill percentage.
+- Report timestamp.
+
+---
+
+## 6. Citizen Reliability Score (CRS)
+
+Generate a separate synthetic history of previously verified reports for each demo citizen.
+
+Use at least 20 previous reports per citizen.
+
+Each historical citizen report must be compared with the independently generated actual bin fill level at the corresponding timestamp.
+
+For the prototype, define a report as correct when the absolute difference between the citizen's reported fill level and the independently verified actual fill level is no more than 10 percentage points.
+
+Calculate:
+
+\[
+\boxed{CRS=\frac{N_{correct}}{N_{verified}}}
+\]
+
+Where:
+
+- \(N_{correct}\) = Number of correctly verified citizen reports.
+- \(N_{verified}\) = Total number of verified reports.
+
+CRS must be between 0 and 1.
+
+For example, if 18 out of 20 reports are correct:
+
+\[
+CRS=\frac{18}{20}=0.90
+\]
+
+Important:
+
+- Calculate CRS from previously verified reports only.
+- Do not count the current citizen submission as correct before independent verification.
+- Do not use the final fused result as ground truth for calculating CRS.
+- If a real citizen has no verified history, mark the CRS as unavailable rather than inventing a score. Do not use that report in reliability fusion until a valid reliability estimate is available.
+
+Save the generated history as:
+
+`synthetic_citizen_history.csv`
+
+---
+
+## 7. Reliability-Based Data Fusion
+
+The system must combine only two fill-level sources:
+
+1. LSTM prediction.
+2. Citizen-reported fill level.
+
+Do not include a photo-based fill estimator.
+
+### A. Calculate Virtual Sensor Error
+
+Convert validation MAE from percentage points to a normalized 0–1 scale:
+
+\[
+e_v=\frac{MAE_{val}}{100}
+\]
+
+Where:
+
+- \(e_v\) = Normalized LSTM error.
+- \(MAE_{val}\) = Validation MAE in percentage points.
+
+### B. Calculate Citizen Error Proxy
+
+Calculate the citizen error proxy using CRS:
+
+\[
+e_c=1-CRS
+\]
+
+Where:
+
+- \(e_c\) = Citizen error proxy.
+- \(CRS\) = Citizen Reliability Score.
+
+### C. Calculate Source Reliability
+
+Use:
+
+\[
+R_v=\frac{1}{e_v+\epsilon}
+\]
+
+\[
+R_c=\frac{1}{e_c+\epsilon}
+\]
+
+Where:
+
+- \(R_v\) = LSTM reliability.
+- \(R_c\) = Citizen reliability.
+- \(\epsilon=0.001\) = Small constant to prevent division by zero.
+
+### D. Normalize Reliability Weights
+
+Calculate:
+
+\[
+w_v=\frac{R_v}{R_v+R_c}
+\]
+
+\[
+w_c=\frac{R_c}{R_v+R_c}
+\]
+
+The weights must satisfy:
+
+\[
+w_v+w_c=1
+\]
+
+### E. Calculate Final Fill Level
+
+Use the two-source weighted fusion formula:
+
+\[
+\boxed{F_{final}=w_vF_v+w_cF_c}
+\]
+
+Where:
+
+- \(F_v\) = LSTM-predicted fill percentage.
+- \(F_c\) = Citizen-reported fill percentage.
+- \(w_v\) = LSTM reliability weight.
+- \(w_c\) = Citizen reliability weight.
+- \(F_{final}\) = Final estimated fill percentage.
+
+If citizen verification is not requested, not received, or does not have a valid CRS, retain the LSTM prediction:
+
+\[
+F_{final}=F_v
+\]
+
+Important: Both source estimates must refer to the same bin and target timestamp.
+
+The citizen error formula is an error-rate proxy based on historical report correctness. Document this limitation and do not describe the two reliability values as independently calibrated probabilities.
+
+---
+
+## 8. Time-to-Full Calculation
+
+Calculate the historical fill accumulation rate using two consecutive valid observations with no collection event between them.
+
+\[
+\boxed{G_t=\frac{F_2-F_1}{t_2-t_1}}
+\]
+
+Where:
+
+- \(F_1\) = Earlier fill level.
+- \(F_2\) = Later fill level.
+- \(t_1,t_2\) = Corresponding observation times.
+- \(G_t\) = Fill accumulation rate in percentage points per hour.
+
+Use the final fused fill level to calculate the time remaining until the bin reaches 100%.
+
+\[
+\boxed{T_{full}=\frac{100-F_{final}}{G_t}}
+\]
+
+Where:
+
+- \(F_{final}\) = Final estimated fill percentage.
+- \(G_t\) = Historical filling rate.
+- \(T_{full}\) = Estimated time-to-full in hours.
+
+Also calculate the initial LSTM-only time-to-full:
+
+\[
+T_{initial}=\frac{100-F_v}{G_t}
+\]
+
+Display both values to show how citizen verification changes the estimated time-to-full.
+
+If the historical accumulation rate is zero or negative, display `Time-to-full: Not estimable` instead of inventing a result.
+
+Assume a constant accumulation rate for this calculation and clearly state that it is an approximation.
+
+Do not calculate overflow probability.
+
+---
+
+## 9. ResNet50 Waste Classification – Separate Module
+
+Implement a separate waste-classification function using ResNet50 with transfer learning.
+
+The three output classes must be:
+
+1. Organic.
+2. Recyclable.
+3. E-waste.
+
+The prediction rule is:
+
+\[
+\boxed{\hat W=\arg\max_k P(W=k|I)}
+\]
+
+Where:
+
+- \(I\) = Citizen-submitted photograph.
+- \(W\) = Waste category.
+- \(P(W=k|I)\) = Probability of category \(k\).
+
+The photograph must only be used for waste classification.
+
+Never use ResNet50 probabilities to calculate fill percentage.
+
+Do not use an unfine-tuned ImageNet ResNet50 head as though it were a trained waste classifier.
+
+If a labelled waste-image dataset or a fine-tuned 3-class ResNet50 checkpoint is not available:
+
+- Implement the classification interface separately.
+- Allow an image path and model checkpoint to be supplied later.
+- Clearly display `ResNet50 classifier not configured`.
+- Do not invent classification probabilities or claim classification accuracy.
+
+If an actual labelled image dataset is supplied, support fine-tuning ResNet50 using the three specified classes and evaluate it on a separate test set.
+
+---
+
+## 10. Complete Python Script
+
+There must be **one main Python script** that performs the complete LSTM and citizen-verification pipeline.
+
+Name it:
+
+`intelliwaste.py`
+
+Running:
+
+```bash
+python intelliwaste.py
+```
+
+Must automatically perform the following operations:
+
+1. Generate synthetic historical data for all 12 bins.
+2. Save the generated CSV.
+3. Preprocess the historical observations.
+4. Build LSTM training sequences.
+5. Split data chronologically.
+6. Train the LSTM model.
+7. Evaluate the LSTM using validation and test datasets.
+8. Save the trained model.
+9. Predict fill levels for all 12 bins.
+10. Calculate prediction confidence for each bin.
+11. Check the 80% verification threshold.
+12. Simulate or collect citizen category selections when verification is required.
+13. Calculate CRS using previously verified citizen reports.
+14. Calculate LSTM and citizen reliability.
+15. Calculate normalized weights.
+16. Calculate final fused fill percentages.
+17. Calculate initial and updated time-to-full.
+18. Display the result for all bins.
+19. Display a detailed step-by-step calculation for one selected bin, such as BIN001.
+20. Report the status of the optional ResNet50 classification module.
+
+The script must allow the selected bin and default citizen category to be changed through configuration variables near the beginning of the file.
+
+Keep the implementation in one Python file. Helper functions and classes may be defined inside that file.
+
+---
+
+## 11. Expected Output
+
+The script must display the following sections in the terminal.
+
+### A. Synthetic Dataset Information
+
+```text
+INTELLIWASTE – SYNTHETIC DATA GENERATION
+
+Total Bins: 12
+Historical Duration: 60 Days
+Sampling Interval: 1 Hour
+Total Records: [Actual generated count]
+
+Zones:
+Residential
+Commercial
+Market
+Institutional
+```
+
+### B. LSTM Training Results
+
+```text
+LSTM MODEL TRAINING RESULTS
+
+Model: LSTM
+Lookback: 24 Hours
+Forecast Horizon: 1 Hour
+
+Training MAE: ...
+Validation MAE: ...
+Test MAE: ...
+
+Training RMSE: ...
+Validation RMSE: ...
+Test RMSE: ...
+```
+
+Use actual calculated metrics. Do not hardcode sample values.
+
+### C. All-Bin Prediction Dashboard
+
+Display a readable table:
+
+| Bin ID | LSTM Fill | Confidence | Citizen Fill | CRS | Final Fill | Time-to-Full |
+|---|---:|---:|---:|---:|---:|---:|
+| BIN001 | ... | ... | ... | ... | ... | ... |
+| BIN002 | ... | ... | ... | ... | ... | ... |
+| BIN003 | ... | ... | ... | ... | ... | ... |
+| BIN004 | ... | ... | ... | ... | ... | ... |
+| ... | ... | ... | ... | ... | ... | ... |
+
+For bins that do not require verification, display `Not Required` in the citizen columns and use the LSTM estimate as the final fill.
+
+### D. Detailed Result for BIN001
+
+Display the complete calculation:
+
+```text
+SELECTED BIN: BIN001
+
+STEP 1 – LSTM PREDICTION
+Predicted Fill Level: ...
+Historical MAE: ...
+
+STEP 2 – CONFIDENCE
+Uncertainty: ...
+Confidence: ...
+Threshold: 80%
+Decision: Verification Required / Not Required
+
+STEP 3 – CITIZEN PARTICIPATION
+Selected Category: ...
+Citizen Fill Estimate: ...
+
+STEP 4 – CITIZEN RELIABILITY
+Correct Verified Reports: ...
+Total Verified Reports: ...
+CRS: ...
+
+STEP 5 – RELIABILITY FUSION
+LSTM Error: ...
+Citizen Error Proxy: ...
+LSTM Reliability: ...
+Citizen Reliability: ...
+LSTM Weight: ...
+Citizen Weight: ...
+Final Fill Level: ...
+
+STEP 6 – TIME-TO-FULL
+Historical Filling Rate: ...
+Initial Time-to-Full: ...
+Updated Time-to-Full: ...
+
+FINAL BIN STATUS
+Fill Level: ...
+Time-to-Full: ...
+Citizen Verification: ...
+Waste Classification: ...
+```
+
+For waste classification, display the actual classifier result only when a valid fine-tuned ResNet50 model and input photograph are available.
+
+### E. Save Output Files
+
+The script must generate:
+
+```text
+intelliwaste/
+│
+├── intelliwaste.py
+├── synthetic_bin_history.csv
+├── synthetic_citizen_history.csv
+├── intelliwaste_lstm.keras
+├── bin_prediction_results.csv
+├── lstm_evaluation_results.csv
+└── README.md
+```
+
+The single Python script must generate the data, train the model, perform calculations, and save results.
+
+Do not create unnecessary scripts or separate modules.
+
+---
+
+## 12. Code Quality Requirements
+
+- Use Python, NumPy, Pandas, and TensorFlow/Keras.
+- Write clean and readable code.
+- Use meaningful variable names.
+- Add comments explaining each calculation.
+- Put configuration values at the beginning of the script.
+- Use a fixed random seed for reproducibility.
+- Handle missing values and invalid data.
+- Ensure fill percentages remain between 0 and 100.
+- Avoid data leakage between training, validation, and testing.
+- Make sure the program runs from start to finish without manual code modifications.
+- Print clear error messages when dependencies, datasets, or model weights are missing.
+- Do not hide model training errors or substitute fake outputs.
+- Keep the mathematical calculations in separate, easy-to-understand Python functions.
+
+## 13. Final Requirements
+
+The priority is a working and understandable prototype, not a complicated research implementation.
+
+The implementation must follow this exact logical flow:
+
+```text
+GENERATE HISTORICAL DATA FOR 12 BINS
+                 |
+                 v
+        PREPROCESS DATA
+                 |
+                 v
+          TRAIN LSTM
+                 |
+                 v
+       PREDICT BIN FILL LEVEL
+                 |
+                 v
+       CALCULATE CONFIDENCE
+                 |
+                 v
+       CHECK 80% THRESHOLD
+                 |
+          +------+------+
+          |             |
+       HIGH            LOW
+          |             |
+          v             v
+    KEEP LSTM       ASK CITIZEN
+    PREDICTION      TO SELECT CATEGORY
+                         |
+                         v
+                  CALCULATE CRS
+                         |
+                         v
+                RELIABILITY FUSION
+                         |
+                         v
+                 FINAL FILL LEVEL
+                         |
+                         v
+                  TIME-TO-FULL
+                         |
+                         v
+                 STORE BIN STATUS
+
+
+CITIZEN PHOTOGRAPH
+        |
+        v
+     RESNET50
+        |
+        v
+ ORGANIC / RECYCLABLE / E-WASTE
+```
+
+The LSTM prediction and citizen observation are the only sources used for fill-level fusion.
+
+ResNet50 is a separate classification module.
+
+Do not include photo-based fill estimation, Method B, overflow probability, vehicle-route optimization, or unnecessary mathematical formulations.
+
+Finally, clearly state in the README and program output that the historical dataset is synthetic and that the resulting model metrics demonstrate prototype behavior, not real-world municipal performance.

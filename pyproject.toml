@@ -1,0 +1,15 @@
+[project]
+name = "intelliwaste"
+version = "0.1.0"
+description = "Synthetic IntelliWaste LSTM prediction and citizen verification prototype"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "tensorflow>=2.20",
+]
+
+[tool.uv]
+package = false
